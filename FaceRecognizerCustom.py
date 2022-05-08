@@ -2,24 +2,37 @@ import cv2
 import numpy as np
 import face_recognition
 import os
+from tkinter import ttk
+from PIL import Image
+import PIL
+
 
 path = 'Images'
 images = []
 classNames = []
-myList = os.listdir(path)
+pictureName = 'NOT-IDENTIFIED'
+anc ='D:\projects/Frecs/Images/'
+aps = os.path.join('Images')
+
+
 
 class FRec:
    def __init__(self):
        
         pass
     
-    
-   for cl in myList:
-       curImg = cv2.imread(f'{path}/{cl}')
-       images.append(curImg)
-       classNames.append(os.path.splitext(cl)[0])
+         
+   
        
+         
    def findEncodings(images):
+       myList = os.listdir(path)
+       
+       for cl in myList:
+           curImg = cv2.imread(f'{path}/{cl}')
+           images.append(curImg)
+           classNames.append(os.path.splitext(cl)[0])
+       
        encodedList = []
        for img in images:
            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
@@ -27,14 +40,45 @@ class FRec:
            encodedList.append(encodedImg)
        return encodedList 
    
-   encodeListKnown = findEncodings(images)
+   #
+   def pictureTaker(x):
+       pictureName =x+'.jpg'
+       
+       
+       cap2 = cv2.VideoCapture(0)
+       while True:
+           ret2,frame2 = cap2.read()
+           frame2 = frame2[120:120+250,200:200+250, :]     
+           cv2.imshow('',frame2)
+           if cv2.waitKey(20) & 0xFF == ord('a'):
+             
+               cv2.imwrite(os.path.join(aps, 'app.jpg'),frame2)
 
+               old_file = os.path.join("Images", "app.jpg")
+               new_file = os.path.join("Images", pictureName)
+               os.rename(old_file, new_file)
+               break
+                   
+               
+               
+               
+           if cv2.waitKey(20) & 0XFF == ord('q'):
+             break
+          
+               
+         
+         
+       cap2.release()
+       cv2.destroyAllWindows()    
    
+
+    #   
    def openCam():
        
       
        
        cap = cv2.VideoCapture(0)
+       encodeListKnown = FRec.findEncodings(images)
         
        while True:
            success, frame = cap.read()
@@ -47,8 +91,9 @@ class FRec:
            encodesCurFrame = face_recognition.face_encodings(imgS,facesCurFrame)
         
            for encodeFace,faceLocation in zip(encodesCurFrame,facesCurFrame):
-               Uyum = face_recognition.compare_faces(FRec.encodeListKnown,encodeFace)
-               Benzerlik = face_recognition.face_distance(FRec.encodeListKnown,encodeFace)
+               Uyum = face_recognition.compare_faces(encodeListKnown,encodeFace)
+               Benzerlik = face_recognition.face_distance(encodeListKnown,encodeFace)
+               
                
               
                matchIndex = np.argmin(Benzerlik)
@@ -76,4 +121,7 @@ class FRec:
            
        cap.release()
        cv2.destroyAllWindows()    
+       
+       
+      
    
