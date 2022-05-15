@@ -1,7 +1,7 @@
 from tkinter import *
 from FaceRecognizerCustom import FRec
 from tkinter import ttk
-
+import threading
 
 class AppMain:
     
@@ -9,10 +9,17 @@ class AppMain:
     
  def __init__(self):
         pass
+    
+ def destroyer():
+     FRec.ROOT.destroy()   
         
  def faceRecognizerOpener():
      FRec.openCam()        
  
  def inputTaker(z):
      a=z
-     FRec.pictureTaker(a)
+     threading.Thread(target=FRec.pictureTaker(a)).start()
+ def Disable():
+     pass
+
+     
