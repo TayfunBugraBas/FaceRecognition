@@ -13,8 +13,21 @@ pictureName = 'NOT-IDENTIFIED'
 anc ='D:\projects/Frecs/Images/'
 aps = os.path.join('Images')
 
+faceProto = "opencv_face_detector.pbtxt"
+faceModel = "opencv_face_detector_uint8.pb"
+ageProto = "age_deploy.prototxt"
+ageModel = "age_net.caffemodel"
+genderProto="gender_deploy.prototxt"
+genderModel="gender_net.caffemodel"
 
 
+MODEL_MEAN_VALUES=(78.4263377603, 87.7689143744, 114.895847746)
+ageList=['(0-2)', '(4-6)', '(8-12)', '(15-20)', '(25-32)', '(38-43)', '(48-53)', '(60-100)']
+genderList=['Erkek','Kadin']
+
+faceNet=cv2.dnn.readNet(faceModel,faceProto)
+ageNet=cv2.dnn.readNet(ageModel,ageProto)
+genderNet=cv2.dnn.readNet(genderModel,genderProto)
 
 
 class FRec:
@@ -63,7 +76,7 @@ class FRec:
    ROOT.title("Control Panel")
    canvas = Canvas(ROOT,height=200,width=200)   
    LABEL = Label(ROOT, text="Yapacağınız işleme Dikkat Ediniz")
-   LABEL.pack()
+   LABEL.pack(padx=70)
    
    #
    def pictureTaker(x):
@@ -97,8 +110,9 @@ class FRec:
                os.rename(old_file, new_file)
                btn1.destroy()
                btn2.destroy()
-               break
                FRec.BtnNormalizer()
+               break
+               
                    
                
                
@@ -106,8 +120,9 @@ class FRec:
            if cv2.waitKey(1) & FRec.btnChk2 == True:
              btn1.destroy()
              btn2.destroy()
-             break
              FRec.BtnNormalizer()  
+             break
+             
           
                
          
@@ -130,13 +145,27 @@ class FRec:
            
            
            success, frame = cap.read()
-           frame = frame[120:120+300,200:200+300, :]
+           frame = frame[120:120+400,200:200+400, :]
          
            imgS = cv2.resize(frame,(0,0),None,0.25,0.25)
            imgS = cv2.cvtColor(imgS, cv2.COLOR_BGR2RGB)
         
            facesCurFrame = face_recognition.face_locations(imgS)
            encodesCurFrame = face_recognition.face_encodings(imgS,facesCurFrame)
+           
+           
+           blob=cv2.dnn.blobFromImage(frame, 1.0, (227,227), MODEL_MEAN_VALUES, swapRB=False)
+           genderNet.setInput(blob)
+           genderPreds=genderNet.forward()
+           gender=genderList[genderPreds[0].argmax()]
+           
+           
+           ageNet.setInput(blob)
+           agePreds=ageNet.forward()
+           age=ageList[agePreds[0].argmax()]
+           
+           
+           
         
            for encodeFace,faceLocation in zip(encodesCurFrame,facesCurFrame):
                Uyum = face_recognition.compare_faces(encodeListKnown,encodeFace)
@@ -154,6 +183,7 @@ class FRec:
                    cv2.rectangle(frame,(x1,y1-20),(x2,y2),(0,255,0),2)
                    
                    cv2.putText(frame,name,(x1-6,y2+30),cv2.FONT_ITALIC,1,(255,255,255),2)
+                   cv2.putText(frame, f'{gender}, {age}', (x1-6,y2+60), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0,0,255), 2, cv2.LINE_AA)
                else:
                   name = 'NOT-IDENTIFIED'
                    
@@ -162,6 +192,9 @@ class FRec:
                   cv2.rectangle(frame,(x1,y1-20),(x2,y2),(0,255,0),2)
                    
                   cv2.putText(frame,name,(x1-6,y2+30),cv2.FONT_ITALIC,1,(255,255,255),2)
+                  cv2.putText(frame, f'{gender}, {age}', (x1-6,y2+60), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0,0,255), 2, cv2.LINE_AA)
+                  
+           
         
            cv2.imshow('',frame)
            if cv2.waitKey(1) & FRec.btnChk2 == True:
